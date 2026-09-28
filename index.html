@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Claudinho Treino" />
+  <meta name="description" content="Ficha Upper/Lower 4x com progressão de cargas, histórico e funcionamento offline." />
+        <style>
+:root {
+  color-scheme: dark;
+  --bg: #020617;
+  --panel: #0f172a;
+  --panel-2: #111827;
+  --muted: #94a3b8;
+  --text: #f8fafc;
+  --line: #1e293b;
+  --accent: #38bdf8;
+  --accent-2: #22c55e;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --shadow: 0 12px 28px rgba(0,0,0,.22);
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(56,189,248,.12), transparent 28rem),
+    var(--bg);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }
+#app { width: min(860px, 100%); margin: 0 auto; padding: max(18px, env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom)); }
+.topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; }
+h1,h2,h3,p { margin-top:0; }
+h1 { font-size: clamp(1.7rem, 5vw, 2.4rem); margin-bottom:0; letter-spacing:-.04em; }
+h2 { letter-spacing:-.03em; }
+.eyebrow { color:var(--accent); font-weight:800; font-size:.72rem; letter-spacing:.12em; margin-bottom:5px; }
+.icon-btn { width:44px; height:44px; border-radius:14px; border:1px solid var(--line); background:rgba(15,23,42,.8); color:var(--text); font-size:1.4rem; }
+.hidden { display:none !important; }
+.today-card { border:1px solid rgba(56,189,248,.2); background:linear-gradient(135deg, rgba(14,116,144,.25), rgba(15,23,42,.94)); border-radius:24px; padding:20px; box-shadow:var(--shadow); margin-bottom:16px; }
+.today-grid { display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; }
+.today-title { font-size:1.2rem; font-weight:800; margin-bottom:5px; }
+.muted { color:var(--muted); }
+.pill { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); background:rgba(2,6,23,.45); border-radius:999px; padding:7px 10px; font-size:.78rem; font-weight:700; }
+.tabs { position:sticky; top:max(8px, env(safe-area-inset-top)); z-index:20; display:grid; grid-template-columns:repeat(4,1fr); gap:6px; padding:6px; background:rgba(2,6,23,.82); backdrop-filter:blur(16px); border:1px solid var(--line); border-radius:18px; margin-bottom:18px; }
+.tab { border:0; background:transparent; color:var(--muted); border-radius:12px; padding:10px 5px; font-size:.8rem; font-weight:750; }
+.tab.active { background:var(--panel); color:var(--text); }
+.view { display:none; }
+.view.active { display:block; }
+.section-title { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-bottom:12px; }
+.section-title h2 { margin-bottom:2px; }
+.workout-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.workout-card { border:1px solid var(--line); background:linear-gradient(180deg, rgba(15,23,42,.98), rgba(8,15,29,.96)); border-radius:20px; padding:16px; box-shadow:var(--shadow); }
+.workout-card h3 { margin-bottom:6px; }
+.workout-card .meta { display:flex; gap:6px; flex-wrap:wrap; margin:12px 0 14px; }
+.exercise-preview { color:var(--muted); font-size:.86rem; line-height:1.45; min-height:56px; }
+.primary,.secondary,.danger { border-radius:14px; padding:12px 14px; border:1px solid transparent; font-weight:800; }
+.primary { background:var(--accent); color:#082f49; }
+.secondary { background:var(--panel-2); color:var(--text); border-color:var(--line); }
+.danger { background:rgba(239,68,68,.12); color:#fecaca; border-color:rgba(239,68,68,.25); }
+.full { width:100%; }
+.empty { text-align:center; padding:32px 18px; border:1px dashed var(--line); border-radius:18px; color:var(--muted); }
+.history-list { display:grid; gap:10px; }
+.history-item { border:1px solid var(--line); background:var(--panel); border-radius:18px; padding:14px; }
+.history-top { display:flex; justify-content:space-between; gap:12px; }
+.history-stats { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+.stat { border:1px solid var(--line); background:rgba(2,6,23,.35); border-radius:12px; padding:8px 10px; font-size:.8rem; }
+.progress-panel,.settings-card { border:1px solid var(--line); background:var(--panel); border-radius:20px; padding:16px; margin-bottom:12px; }
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+label { display:block; font-size:.78rem; font-weight:750; color:var(--muted); margin-bottom:6px; }
+input,textarea,select { width:100%; color:var(--text); background:#020617; border:1px solid var(--line); border-radius:12px; padding:11px 10px; outline:none; }
+input:focus,textarea:focus,select:focus { border-color:var(--accent); }
+canvas { width:100%; height:240px; background:#020617; border-radius:14px; border:1px solid var(--line); }
+.kpi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+.kpi { background:#020617; border:1px solid var(--line); border-radius:14px; padding:12px; }
+.kpi strong { display:block; font-size:1.25rem; }
+.kpi span { color:var(--muted); font-size:.72rem; }
+dialog { width:min(820px, calc(100% - 20px)); max-height:92dvh; border:1px solid var(--line); border-radius:24px; background:var(--bg); color:var(--text); padding:0; box-shadow:0 24px 80px rgba(0,0,0,.55); }
+dialog::backdrop { background:rgba(0,0,0,.72); backdrop-filter:blur(4px); }
+.dialog-head { position:sticky; top:0; z-index:10; background:rgba(2,6,23,.94); backdrop-filter:blur(14px); display:flex; justify-content:space-between; align-items:center; gap:12px; padding:18px; border-bottom:1px solid var(--line); }
+.dialog-head h2 { margin-bottom:0; }
+.session-meta { padding:12px 18px; color:var(--muted); font-size:.85rem; }
+.exercise-card { margin:0 14px 12px; border:1px solid var(--line); background:var(--panel); border-radius:18px; padding:14px; }
+.exercise-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+.exercise-name { margin-bottom:4px; font-size:1rem; }
+.exercise-target { color:var(--muted); font-size:.8rem; margin-bottom:0; }
+.progress-badge { white-space:nowrap; border-radius:999px; padding:6px 8px; font-size:.68rem; font-weight:800; background:rgba(56,189,248,.1); color:#bae6fd; border:1px solid rgba(56,189,248,.18); }
+.last-performance { font-size:.78rem; color:#cbd5e1; margin:10px 0; }
+.sets { display:grid; gap:7px; }
+.set-row { display:grid; grid-template-columns:32px 1fr 1fr 1fr 42px; gap:6px; align-items:center; }
+.set-num { color:var(--muted); text-align:center; font-size:.8rem; font-weight:800; }
+.set-row input { text-align:center; padding:10px 4px; }
+.done-check { appearance:none; width:36px; height:36px; padding:0; border-radius:10px; border:1px solid var(--line); background:#020617; position:relative; }
+.done-check:checked { background:var(--accent-2); border-color:var(--accent-2); }
+.done-check:checked::after { content:"✓"; position:absolute; inset:0; display:grid; place-items:center; color:#052e16; font-weight:1000; }
+.set-labels { display:grid; grid-template-columns:32px 1fr 1fr 1fr 42px; gap:6px; color:var(--muted); font-size:.68rem; text-align:center; margin-bottom:4px; }
+.exercise-note { margin-top:10px; resize:vertical; }
+.dialog-actions { position:sticky; bottom:0; padding:14px; background:rgba(2,6,23,.94); backdrop-filter:blur(14px); border-top:1px solid var(--line); }
+.dialog-actions .primary { width:100%; }
+.install-copy { padding:18px; line-height:1.55; color:#e2e8f0; }
+.toast { position:fixed; left:50%; bottom:calc(22px + env(safe-area-inset-bottom)); transform:translateX(-50%); background:#f8fafc; color:#0f172a; padding:11px 14px; border-radius:999px; box-shadow:var(--shadow); font-weight:800; z-index:999; }
+.row-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.small { font-size:.78rem; }
+@media (max-width:640px) {
+  .workout-grid { grid-template-columns:1fr; }
+  .field-row { grid-template-columns:1fr; }
+  .set-row,.set-labels { grid-template-columns:26px 1fr 1fr 1fr 38px; }
+  .kpi-grid { grid-template-columns:1fr 1fr; }
+}
+
+</style>
+  <title>Claudinho Treino</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">HIPERTROFIA • UPPER/LOWER 4×</p>
+        <h1>Claudinho Treino</h1>
+      </div>
+      <button id="installBtn" class="icon-btn hidden" aria-label="Instalar aplicativo">＋</button>
+    </header>
+
+    <main>
+      <section id="todayCard" class="today-card"></section>
+
+      <nav class="tabs" aria-label="Navegação principal">
+        <button class="tab active" data-view="workouts">Treinos</button>
+        <button class="tab" data-view="history">Histórico</button>
+        <button class="tab" data-view="progress">Evolução</button>
+        <button class="tab" data-view="settings">Ajustes</button>
+      </nav>
+
+      <section id="workouts" class="view active"></section>
+      <section id="history" class="view"></section>
+      <section id="progress" class="view"></section>
+      <section id="settings" class="view"></section>
+    </main>
+  </div>
+
+  <dialog id="workoutDialog">
+    <div class="dialog-head">
+      <div>
+        <p id="dialogDay" class="eyebrow"></p>
+        <h2 id="dialogTitle"></h2>
+      </div>
+      <button id="closeDialog" class="icon-btn" aria-label="Fechar">×</button>
+    </div>
+    <div id="sessionMeta" class="session-meta"></div>
+    <div id="exerciseList"></div>
+    <div class="dialog-actions">
+      <button id="finishWorkout" class="primary">Finalizar treino</button>
+    </div>
+  </dialog>
+
+  <dialog id="installDialog">
+    <div class="dialog-head">
+      <h2>Instalar no celular</h2>
+      <button id="closeInstall" class="icon-btn" aria-label="Fechar">×</button>
+    </div>
+    <div id="installInstructions" class="install-copy"></div>
+  </dialog>
+
+  <template id="exerciseTemplate">
+    <article class="exercise-card">
+      <div class="exercise-head">
+        <div>
+          <h3 class="exercise-name"></h3>
+          <p class="exercise-target"></p>
+        </div>
+        <span class="progress-badge"></span>
+      </div>
+      <p class="last-performance"></p>
+      <div class="sets"></div>
+      <textarea class="exercise-note" rows="2" placeholder="Nota rápida: técnica, máquina, regulagem..."></textarea>
+    </article>
+  </template>
+
+  <script>
+const APP_KEY = 'claudinhoTreino.v1';
+const DRAFT_KEY = 'claudinhoTreino.drafts.v1';
+
+const workouts = [
+  {
+    id:'upper-a', day:1, dayLabel:'Segunda', name:'Upper A', focus:'Peito + remadas', swim:true,
+    exercises:[
+      ['ua1','Supino inclinado máquina/Smith',3,6,10,2],
+      ['ua2','Remada apoiada máquina',3,6,10,2],
+      ['ua3','Supino reto máquina',3,8,12,1],
+      ['ua4','Puxada alta pegada neutra',3,8,12,1],
+      ['ua5','Elevação lateral',3,12,20,1],
+      ['ua6','Rosca Scott',2,8,12,1],
+      ['ua7','Tríceps na polia',2,10,15,1]
+    ]
+  },
+  {
+    id:'lower-a', day:2, dayLabel:'Terça', name:'Lower A', focus:'Quadríceps', swim:false,
+    exercises:[
+      ['la1','Hack squat ou agachamento',3,6,10,2],
+      ['la2','Levantamento terra romeno',3,6,10,2],
+      ['la3','Leg press',3,8,12,1],
+      ['la4','Cadeira extensora',2,10,15,1],
+      ['la5','Mesa/cadeira flexora',3,10,15,1],
+      ['la6','Panturrilha em pé',3,8,15,1],
+      ['la7','Abdominal cabo/máquina',2,10,15,1]
+    ]
+  },
+  {
+    id:'upper-b', day:4, dayLabel:'Quinta', name:'Upper B', focus:'Dorsais + peito', swim:false,
+    exercises:[
+      ['ub1','Barra fixa ou puxada alta',3,6,10,2],
+      ['ub2','Supino reto com halteres/máquina',3,6,10,2],
+      ['ub3','Remada unilateral cabo/máquina',3,8,12,1],
+      ['ub4','Crucifixo máquina/cabo',2,10,15,1],
+      ['ub5','Elevação lateral',3,12,20,1],
+      ['ub6','Crucifixo inverso / posterior',2,12,20,1],
+      ['ub7','Rosca inclinada',2,10,15,1],
+      ['ub8','Tríceps francês/cabo acima da cabeça',2,10,15,1]
+    ]
+  },
+  {
+    id:'lower-b', day:5, dayLabel:'Sexta', name:'Lower B', focus:'Posterior + glúteos', swim:true,
+    exercises:[
+      ['lb1','Hip thrust',3,6,10,2],
+      ['lb2','Agachamento/Hack ou Leg press',3,8,12,2],
+      ['lb3','Flexora',3,8,12,1],
+      ['lb4','Afundo búlgaro',2,8,12,1],
+      ['lb5','Extensora',2,12,15,1],
+      ['lb6','Panturrilha sentada',3,10,15,1],
+      ['lb7','Abdominal',2,10,20,1]
+    ]
+  }
+];
+
+const swimDays = {1:'Natação + Upper A',3:'Natação • recuperação da musculação',5:'Natação + Lower B'};
+let data = loadData();
+let deferredPrompt = null;
+let activeWorkout = null;
+let activeDraft = null;
+
+function blankData(){ return { history:[], bodyweight:[], settings:{name:'', defaultIncrement:2.5} }; }
+function loadData(){
+  try { return {...blankData(), ...JSON.parse(localStorage.getItem(APP_KEY) || '{}')}; }
+  catch { return blankData(); }
+}
+function saveData(){ localStorage.setItem(APP_KEY, JSON.stringify(data)); }
+function loadDrafts(){ try{return JSON.parse(localStorage.getItem(DRAFT_KEY)||'{}')}catch{return{}} }
+function saveDrafts(d){ localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); }
+function formatDate(iso){ return new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date(iso)); }
+function todayISO(){ const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
+function round05(n){ return Math.round(n*2)/2; }
+function toast(msg){ const el=document.createElement('div'); el.className='toast'; el.textContent=msg; document.body.appendChild(el); setTimeout(()=>el.remove(),2200); }
+function getExerciseName(id){ for(const w of workouts){ const e=w.exercises.find(x=>x[0]===id); if(e) return e[1]; } return id; }
+function workoutById(id){ return workouts.find(w=>w.id===id); }
+
+function renderToday(){
+  const d=new Date(); const day=d.getDay(); const workout=workouts.find(w=>w.day===day); const swim=swimDays[day];
+  let title='Recuperação'; let desc='Sem musculação programada hoje.'; let btn='';
+  if(workout){ title=`Hoje: ${workout.name}`; desc=`${workout.focus}${swim?' • '+swim:''}`; btn=`<button class="primary" onclick="openWorkout('${workout.id}')">Abrir treino</button>`; }
+  else if(swim){ title='Hoje: natação'; desc=swim; }
+  else if(day===0 || day===6){ title='Fim de semana de recuperação'; desc='Sem musculação. Priorize sono, alimentação e recuperação.'; }
+  document.querySelector('#todayCard').innerHTML=`<div class="today-grid"><div><p class="eyebrow">${new Intl.DateTimeFormat('pt-BR',{weekday:'long',day:'2-digit',month:'long'}).format(d).toUpperCase()}</p><div class="today-title">${title}</div><p class="muted small">${desc}</p><span class="pill">${navigator.onLine?'● Online':'○ Offline • dados salvos no aparelho'}</span></div>${btn}</div>`;
+}
+
+function renderWorkouts(){
+  document.querySelector('#workouts').innerHTML=`
+    <div class="section-title"><div><h2>Sua semana</h2><p class="muted small">Musculação 4× • Natação seg/qua/sex</p></div></div>
+    <div class="workout-grid">${workouts.map(w=>`
+      <article class="workout-card">
+        <p class="eyebrow">${w.dayLabel.toUpperCase()}</p><h3>${w.name}</h3><p class="muted small">${w.focus}</p>
+        <div class="meta"><span class="pill">${w.exercises.length} exercícios</span>${w.swim?'<span class="pill">🏊 Natação</span>':''}</div>
+        <p class="exercise-preview">${w.exercises.slice(0,3).map(e=>e[1]).join(' • ')}${w.exercises.length>3?'…':''}</p>
+        <button class="primary full" onclick="openWorkout('${w.id}')">Abrir ficha</button>
+      </article>`).join('')}</div>`;
+}
+
+function latestExerciseRecord(exId){
+  for(let i=data.history.length-1;i>=0;i--){
+    const ex=data.history[i].exercises?.find(e=>e.id===exId); if(ex) return {session:data.history[i], ex};
+  }
+  return null;
+}
+function progressionText(exDef){
+  const [id,,sets,,maxRep] = exDef; const prev=latestExerciseRecord(id);
+  if(!prev) return 'Primeira sessão';
+  const completed=prev.ex.sets.filter(s=>s.done);
+  if(completed.length<sets) return 'Repita e complete as séries';
+  const allTop=completed.every(s=>Number(s.reps)>=maxRep);
+  if(allTop){
+    const bestLoad=Math.max(...completed.map(s=>Number(s.load)||0));
+    if(bestLoad>0){ const inc=Math.max(.5, Number(data.settings.defaultIncrement)||2.5); return `Próx.: ~${round05(bestLoad*(1+inc/100))} kg`; }
+    return 'Aumente levemente a dificuldade';
+  }
+  return 'Mantenha carga e some reps';
+}
+function previousText(exDef){
+  const prev=latestExerciseRecord(exDef[0]);
+  if(!prev) return 'Sem histórico ainda.';
+  const sets=prev.ex.sets.filter(s=>s.done).map(s=>`${s.load||0}kg×${s.reps||0}`).join(' • ');
+  return `Última (${formatDate(prev.session.date)}): ${sets || 'sem séries concluídas'}`;
+}
+
+window.openWorkout = function(id){
+  activeWorkout=workoutById(id);
+  const drafts=loadDrafts(); const key=`${todayISO()}::${id}`;
+  activeDraft=drafts[key] || {date:todayISO(),workoutId:id,startedAt:new Date().toISOString(),exercises:{}};
+  document.querySelector('#dialogDay').textContent=activeWorkout.dayLabel.toUpperCase();
+  document.querySelector('#dialogTitle').textContent=`${activeWorkout.name} • ${activeWorkout.focus}`;
+  document.querySelector('#sessionMeta').textContent=`Faixas de repetição + RIR alvo. A sessão é salva automaticamente neste aparelho.`;
+  const host=document.querySelector('#exerciseList'); host.innerHTML='';
+  activeWorkout.exercises.forEach(def=>{
+    const [exId,name,setCount,minRep,maxRep,rir]=def;
+    if(!activeDraft.exercises[exId]) activeDraft.exercises[exId]={sets:Array.from({length:setCount},()=>({load:'',reps:'',rir:'',done:false})),note:''};
+    const node=document.querySelector('#exerciseTemplate').content.cloneNode(true);
+    const card=node.querySelector('.exercise-card'); card.dataset.exId=exId;
+    node.querySelector('.exercise-name').textContent=name;
+    node.querySelector('.exercise-target').textContent=`${setCount} séries • ${minRep}–${maxRep} reps • alvo ${rir}–${Math.max(rir,rir+1)} RIR`;
+    node.querySelector('.progress-badge').textContent=progressionText(def);
+    node.querySelector('.last-performance').textContent=previousText(def);
+    const setsHost=node.querySelector('.sets');
+    setsHost.innerHTML=`<div class="set-labels"><span>#</span><span>kg</span><span>reps</span><span>RIR</span><span>✓</span></div>`;
+    activeDraft.exercises[exId].sets.forEach((s,idx)=>{
+      const row=document.createElement('div'); row.className='set-row';
+      row.innerHTML=`<span class="set-num">${idx+1}</span><input inputmode="decimal" aria-label="Carga série ${idx+1}" value="${s.load}"><input inputmode="numeric" aria-label="Repetições série ${idx+1}" value="${s.reps}"><input inputmode="numeric" aria-label="RIR série ${idx+1}" value="${s.rir}"><input class="done-check" type="checkbox" aria-label="Concluir série ${idx+1}" ${s.done?'checked':''}>`;
+      const [load,reps,rirInput,done]=row.querySelectorAll('input');
+      const sync=()=>{ const st=activeDraft.exercises[exId].sets[idx]; st.load=load.value; st.reps=reps.value; st.rir=rirInput.value; st.done=done.checked; persistDraft(); };
+      [load,reps,rirInput,done].forEach(i=>i.addEventListener('input',sync)); done.addEventListener('change',sync);
+      setsHost.appendChild(row);
+    });
+    const note=node.querySelector('.exercise-note'); note.value=activeDraft.exercises[exId].note||''; note.addEventListener('input',()=>{activeDraft.exercises[exId].note=note.value;persistDraft();});
+    host.appendChild(node);
+  });
+  persistDraft(); document.querySelector('#workoutDialog').showModal();
+}
+function persistDraft(){ if(!activeWorkout||!activeDraft)return; const drafts=loadDrafts(); drafts[`${activeDraft.date}::${activeWorkout.id}`]=activeDraft; saveDrafts(drafts); }
+
+function finishWorkout(){
+  if(!activeWorkout||!activeDraft)return;
+  const exercises=activeWorkout.exercises.map(def=>{ const [id,name]=def; const d=activeDraft.exercises[id]; return {id,name,note:d.note,sets:d.sets.map(s=>({load:Number(s.load)||0,reps:Number(s.reps)||0,rir:s.rir===''?null:Number(s.rir),done:!!s.done}))}; });
+  const completedSets=exercises.flatMap(e=>e.sets).filter(s=>s.done);
+  if(!completedSets.length){ toast('Marque pelo menos uma série concluída.'); return; }
+  const session={id:`${Date.now()}`,date:activeDraft.date,finishedAt:new Date().toISOString(),workoutId:activeWorkout.id,workoutName:activeWorkout.name,focus:activeWorkout.focus,exercises};
+  data.history.push(session); saveData(); const drafts=loadDrafts(); delete drafts[`${activeDraft.date}::${activeWorkout.id}`]; saveDrafts(drafts);
+  document.querySelector('#workoutDialog').close(); toast('Treino salvo ✓'); renderAll();
+}
+
+function sessionVolume(s){ return Math.round((s.exercises||[]).flatMap(e=>e.sets).filter(x=>x.done).reduce((acc,x)=>acc+(Number(x.load)||0)*(Number(x.reps)||0),0)); }
+function renderHistory(){
+  const el=document.querySelector('#history');
+  if(!data.history.length){ el.innerHTML='<div class="empty">Seu histórico vai aparecer aqui depois do primeiro treino concluído.</div>'; return; }
+  el.innerHTML=`<div class="section-title"><div><h2>Histórico</h2><p class="muted small">${data.history.length} sessões salvas</p></div></div><div class="history-list">${[...data.history].reverse().map(s=>{
+    const sets=s.exercises.flatMap(e=>e.sets).filter(x=>x.done).length;
+    return `<article class="history-item"><div class="history-top"><div><strong>${s.workoutName}</strong><div class="muted small">${formatDate(s.date)} • ${s.focus}</div></div><button class="icon-btn" onclick="deleteSession('${s.id}')">×</button></div><div class="history-stats"><span class="stat">${sets} séries</span><span class="stat">${sessionVolume(s).toLocaleString('pt-BR')} kg de volume</span></div></article>`;
+  }).join('')}</div>`;
+}
+window.deleteSession=function(id){ if(!confirm('Excluir esta sessão do histórico?'))return; data.history=data.history.filter(s=>s.id!==id); saveData(); renderAll(); }
+
+function exerciseSeries(exId){
+  return data.history.map(s=>{ const ex=s.exercises?.find(e=>e.id===exId); if(!ex)return null; const sets=ex.sets.filter(x=>x.done&&x.reps>0); if(!sets.length)return null; const best=Math.max(...sets.map(x=>(x.load||0)*(1+(x.reps||0)/30))); return {date:s.date,value:best}; }).filter(Boolean);
+}
+function renderProgress(){
+  const unique=[]; workouts.forEach(w=>w.exercises.forEach(e=>{if(!unique.some(x=>x[0]===e[0]))unique.push(e)}));
+  const totalVolume=data.history.reduce((a,s)=>a+sessionVolume(s),0);
+  const last30=data.history.filter(s=>(Date.now()-new Date(s.date+'T12:00:00'))/86400000<=30).length;
+  document.querySelector('#progress').innerHTML=`
+    <div class="kpi-grid"><div class="kpi"><strong>${data.history.length}</strong><span>treinos</span></div><div class="kpi"><strong>${last30}</strong><span>últimos 30 dias</span></div><div class="kpi"><strong>${Math.round(totalVolume/1000)}t</strong><span>volume acumulado</span></div></div>
+    <div class="progress-panel"><label for="exerciseSelect">Exercício</label><select id="exerciseSelect">${unique.map(e=>`<option value="${e[0]}">${e[1]}</option>`).join('')}</select><p class="muted small">Gráfico usa uma estimativa de força (e1RM) a partir da melhor série registrada.</p><canvas id="progressChart" width="700" height="280"></canvas></div>
+    <div class="progress-panel"><h3>Peso corporal</h3><div class="field-row"><div><label>Data</label><input id="bwDate" type="date" value="${todayISO()}"></div><div><label>Peso (kg)</label><input id="bwValue" inputmode="decimal" placeholder="Ex.: 78,4"></div></div><button id="saveBW" class="secondary full" style="margin-top:10px">Salvar peso</button><div id="bwList" class="muted small" style="margin-top:10px"></div></div>`;
+  const sel=document.querySelector('#exerciseSelect'); sel.addEventListener('change',()=>drawChart(sel.value)); document.querySelector('#saveBW').addEventListener('click',saveBodyweight); renderBW(); drawChart(sel.value);
+}
+function drawChart(exId){
+  const canvas=document.querySelector('#progressChart'); if(!canvas)return; const ctx=canvas.getContext('2d'); const points=exerciseSeries(exId).slice(-12); const W=canvas.width,H=canvas.height,pad=42; ctx.clearRect(0,0,W,H); ctx.strokeStyle='#1e293b'; ctx.lineWidth=1; for(let i=0;i<5;i++){const y=pad+i*(H-pad*2)/4;ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(W-pad,y);ctx.stroke();}
+  if(points.length<1){ctx.fillStyle='#94a3b8';ctx.font='16px system-ui';ctx.textAlign='center';ctx.fillText('Registre treinos para ver sua evolução',W/2,H/2);return;}
+  const vals=points.map(p=>p.value); let min=Math.min(...vals),max=Math.max(...vals); if(min===max){min*=.9;max*=1.1||1;} const x=i=>pad+(points.length===1?(W-pad*2)/2:i*(W-pad*2)/(points.length-1)); const y=v=>H-pad-(v-min)*(H-pad*2)/(max-min);
+  ctx.strokeStyle='#38bdf8';ctx.lineWidth=4;ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(x(i),y(p.value)):ctx.moveTo(x(i),y(p.value)));ctx.stroke();ctx.fillStyle='#38bdf8';points.forEach((p,i)=>{ctx.beginPath();ctx.arc(x(i),y(p.value),6,0,Math.PI*2);ctx.fill();});ctx.fillStyle='#cbd5e1';ctx.font='12px system-ui';ctx.textAlign='center';points.forEach((p,i)=>{ctx.fillText(new Date(p.date+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}),x(i),H-14);});ctx.textAlign='left';ctx.fillText(`${max.toFixed(1)} kg`,4,pad+4);ctx.fillText(`${min.toFixed(1)} kg`,4,H-pad+4);
+}
+function saveBodyweight(){ const raw=document.querySelector('#bwValue').value.replace(',','.'); const v=Number(raw); if(!v||v<20||v>300){toast('Digite um peso válido.');return;} data.bodyweight.push({date:document.querySelector('#bwDate').value||todayISO(),value:v}); data.bodyweight.sort((a,b)=>a.date.localeCompare(b.date)); saveData(); document.querySelector('#bwValue').value=''; renderBW(); toast('Peso salvo ✓'); }
+function renderBW(){ const el=document.querySelector('#bwList'); if(!el)return; const list=data.bodyweight.slice(-6).reverse(); el.innerHTML=list.length?list.map(x=>`${formatDate(x.date)} — <strong>${x.value.toLocaleString('pt-BR')} kg</strong>`).join('<br>'):'Nenhum peso registrado.'; }
+
+function renderSettings(){
+  document.querySelector('#settings').innerHTML=`
+    <div class="settings-card"><h3>Progressão</h3><label>Incremento sugerido quando atingir o topo das repetições (%)</label><input id="increment" inputmode="decimal" value="${data.settings.defaultIncrement||2.5}"><p class="muted small" style="margin-top:8px">Sugestão apenas orientativa; ajuste conforme máquina, anilhas e execução.</p></div>
+    <div class="settings-card"><h3>Backup</h3><p class="muted small">Os dados ficam no armazenamento local do aparelho. Exporte um backup para não perder seu histórico se trocar de celular ou limpar os dados do navegador.</p><div class="row-actions"><button id="exportBtn" class="secondary">Exportar JSON</button><label class="secondary" style="display:inline-flex;align-items:center;margin:0;cursor:pointer">Importar JSON<input id="importFile" type="file" accept="application/json" hidden></label></div></div>
+    <div class="settings-card"><h3>Instalação</h3><p class="muted small">Depois de hospedado em HTTPS, ele funciona como PWA e também offline.</p><button id="showInstall" class="secondary">Como instalar no celular</button></div>`;
+  document.querySelector('#increment').addEventListener('change',e=>{ const n=Number(String(e.target.value).replace(',','.')); if(n>0&&n<20){data.settings.defaultIncrement=n;saveData();toast('Ajuste salvo');} });
+  document.querySelector('#exportBtn').addEventListener('click',exportData); document.querySelector('#importFile').addEventListener('change',importData); document.querySelector('#showInstall').addEventListener('click',showInstallHelp);
+}
+function exportData(){ const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a');a.href=url;a.download=`claudinho-treino-backup-${todayISO()}.json`;a.click();URL.revokeObjectURL(url); }
+function importData(e){ const file=e.target.files?.[0]; if(!file)return; const r=new FileReader(); r.onload=()=>{ try{ const parsed=JSON.parse(r.result); if(!Array.isArray(parsed.history))throw new Error(); data={...blankData(),...parsed};saveData();renderAll();toast('Backup importado ✓'); }catch{toast('Arquivo de backup inválido.');} }; r.readAsText(file); }
+
+function showInstallHelp(){
+  const isiOS=/iphone|ipad|ipod/i.test(navigator.userAgent); document.querySelector('#installInstructions').innerHTML=isiOS?`<p>No iPhone:</p><ol><li>Abra o endereço do app no <strong>Safari</strong>.</li><li>Toque em <strong>Compartilhar</strong>.</li><li>Escolha <strong>Adicionar à Tela de Início</strong>.</li><li>Confirme em <strong>Adicionar</strong>.</li></ol><p>Depois disso ele abre como um app e continua funcionando offline.</p>`:`<p>No Android/Chrome, abra o menu do navegador e escolha <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>.</p>`; document.querySelector('#installDialog').showModal();
+}
+
+function renderAll(){ renderToday(); renderWorkouts(); renderHistory(); renderProgress(); renderSettings(); }
+
+document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); document.querySelectorAll('.view').forEach(x=>x.classList.remove('active')); btn.classList.add('active'); document.querySelector(`#${btn.dataset.view}`).classList.add('active'); }));
+document.querySelector('#closeDialog').addEventListener('click',()=>document.querySelector('#workoutDialog').close());
+document.querySelector('#finishWorkout').addEventListener('click',finishWorkout);
+document.querySelector('#closeInstall').addEventListener('click',()=>document.querySelector('#installDialog').close());
+window.addEventListener('online',renderToday); window.addEventListener('offline',renderToday);
+window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; document.querySelector('#installBtn').classList.remove('hidden'); });
+document.querySelector('#installBtn').addEventListener('click',async()=>{ if(deferredPrompt){ deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; document.querySelector('#installBtn').classList.add('hidden'); } else showInstallHelp(); });
+if(!window.matchMedia('(display-mode: standalone)').matches && /iphone|ipad|ipod/i.test(navigator.userAgent)) document.querySelector('#installBtn').classList.remove('hidden');
+
+renderAll();
+
+</script>
+  <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}</script>
+</body>
+</html>
